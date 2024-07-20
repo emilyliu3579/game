@@ -13,6 +13,7 @@ const player = "p"
 const flag = "f"
 const wall = "w"
 const button = "b"
+const monster = "m"
 
 setLegend(
   [ player, bitmap`
@@ -82,7 +83,24 @@ CCCCCCCCCCCCCCCC`],
 ..LLLLLLLLLLLL..
 ..LLLLLLLLLLLL..
 ................
-................`]
+................`],
+  [ monster, bitmap`
+................
+....8888888.....
+..888888888888..
+..88DDDDDDDD88..
+..88DDDDDDDD88..
+..88DD4DD4DD88..
+..88DDDDDDDD88..
+..88DDDDDDDD88..
+..88DDD00DDD88..
+....DDDDDDDD....
+.......DD.......
+.....DDDDDD.....
+.......DD.......
+.......DD.......
+......D..D......
+.....D....D.....`]
 )
 
 setSolids([ player, wall ])
@@ -115,11 +133,11 @@ pw...
 .w...
 bwwww`,
   map`
-f....w...
+f........
 wwwwww.w.
-wwwwww.wb
-w...bw.ww
-w.wwww...
+wwwwww.w.
+w....w.ww
+w.w.ww...
 w.w.w.ww.
 www.w..w.
 bpw.ww.w.
@@ -148,7 +166,44 @@ onInput("a", () => {
 })
 
 // ending
+const moveSpriteAfterDelay = (sprite, newX, newY, delay) => {
+  setTimeout(() => {
+    sprite.x = newX;
+    sprite.y = newY;
+  }, delay); // Specify the delay in milliseconds
+}
+
+let moveCount = 0;
+const moveMonster = () => {
+  const mons = getFirst(monster);
+  if (moveCount < 4) {
+    moveSpriteAfterDelay(mons, mons.x, mons.y - 1, 1000);
+  } else if (moveCount < 6) {
+    moveSpriteAfterDelay(mons, mons.x + 1, mons.y, 1000);
+  } else if (moveCount < 11) {
+    moveSpriteAfterDelay(mons, mons.x, mons.y + 1, 1000);
+  } else if (moveCount < 16) {
+    moveSpriteAfterDelay(mons, mons.x + 1, mons.y, 1000);
+  } else if (moveCount < 20) {
+    moveSpriteAfterDelay(mons, mons.x, mons.y - 1, 1000);
+  } else if (moveCount < 22) {
+    moveSpriteAfterDelay(mons, mons.x - 1, mons.y, 1000);
+  } else if (moveCount < 26) {
+    moveSpriteAfterDelay(mons, mons.x, mons.y - 1, 1000);
+  } else if (moveCount < 31) {
+    moveSpriteAfterDelay(mons, mons.x - 1, mons.y, 1000);
+  }
+  moveCount += 1;
+  if (moveCount < 31) {
+    setTimeout(moveMonster, 1000); // Recursive call to continue movement
+  }
+};
+
 afterInput(() => {
+  const playerPosition = getFirst(player);
+  const playerX = playerPosition.x;
+  const playerY = playerPosition.y;
+  
   if (tilesWith(flag, player).length == 1) {
     // increase the current level number
     level = level + 1;
@@ -164,13 +219,20 @@ afterInput(() => {
 
   if(level == 2) {
     if(tilesWith(button, player).length == 1) {
-      levels[level] = map`
-.w...
-.wf..
-.www.
-p....
-bwwww`;
-      setMap(levels[level]);
+      clearTile(1,3);
+    }
+  }
+
+  if(level == 3) {
+    if(tilesWith(button, player).length == 1) {
+      clearTile(1,6);
+    }
+
+    // monster will chase after (1,3)
+    if(playerX == 1 && playerY == 3) {
+      addSprite(1, 7, monster);
+      // Start the movement of the monster
+      moveMonster();
     }
   }
 })
