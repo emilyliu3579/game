@@ -101,9 +101,9 @@ CCCCCCCCCCCCCCCC`],
 .......DD.......
 ......D..D......
 .....D....D.....`]
-)
+);
 
-setSolids([ player, wall ])
+setSolids([ player, wall ]);
 
 // maps
 let level = 0
@@ -142,28 +142,57 @@ w.w.w.ww.
 www.w..w.
 bpw.ww.w.
 www......`,
-]
+  map`
+.wwwwwwww
+.w.w...pw
+...ww.w.w
+ww..wbw.w
+.ww.wwwmw
+..w.w.www
+w...w...f
+www...www`,
+];
 
-const currentLevel = levels[level]
-setMap(currentLevel)
+const currentLevel = levels[level];
+setMap(currentLevel);
 
 setPushables({
   [ player ]: []
-})
+});
 
 // actions
+let isGameOver = false;
 onInput("s", () => {
-  getFirst(player).y += 1
-})
+  if (!isGameOver) {
+    getFirst(player).y += 1;
+  }
+});
 onInput("w", () => {
-  getFirst(player).y -= 1
-})
+  if (!isGameOver) {
+    getFirst(player).y -= 1;
+  }
+});
 onInput("d", () => {
-  getFirst(player).x += 1
-})
+  if (!isGameOver) {
+    getFirst(player).x += 1;
+  }
+});
 onInput("a", () => {
-  getFirst(player).x -= 1
-})
+  if (!isGameOver) {
+    getFirst(player).x -= 1;
+  }
+});
+
+// input to reset level
+onInput("j", () => {
+  const currentLevel = levels[level]; // get the original map of the level
+
+  // make sure the level exists before we load it
+  if (currentLevel !== undefined) {
+    clearText("");
+    setMap(currentLevel);
+  }
+});
 
 // ending
 const moveSpriteAfterDelay = (sprite, newX, newY, delay) => {
@@ -171,10 +200,31 @@ const moveSpriteAfterDelay = (sprite, newX, newY, delay) => {
     sprite.x = newX;
     sprite.y = newY;
   }, delay); // Specify the delay in milliseconds
-}
+};
 
 let moveCount = 0;
+let isMonsterMoving = true;
 const moveMonster = () => {
+  if(!isMonsterMoving) {
+    return;
+  }
+  if(level == 3) {
+    level3();
+  } else if(level == 4) {
+    level4();
+  }
+};
+
+const monsterCatch = () => {
+  if(getFirst(player).x == getFirst(monster).x && getFirst(player).y == getFirst(monster).y) {
+    addText("you lost", { y: 4, color: color`3`});
+    addText("reset to try again", { y: 6, color: color`3`});
+    isMonsterMoving = false;
+    isGameOver = true;
+  }
+};
+
+const level3 = () => {
   const mons = getFirst(monster);
   if (moveCount < 4) {
     moveSpriteAfterDelay(mons, mons.x, mons.y - 1, 1000);
@@ -195,9 +245,36 @@ const moveMonster = () => {
   }
   moveCount += 1;
   if (moveCount < 31) {
+    monsterCatch();
     setTimeout(moveMonster, 1000); // Recursive call to continue movement
   }
-};
+}
+
+const level4 = () => {
+  const mons = getFirst(monster);
+  if (moveCount < 3) {
+    moveSpriteAfterDelay(mons, mons.x, mons.y - 1, 1000);
+  } else if(moveCount < 8) {
+    moveSpriteAfterDelay(mons, mons.x - 1, mons.y, 1000);
+  } else if(moveCount < 10) {
+    moveSpriteAfterDelay(mons, mons.x, mons.y + 1, 1000);
+  } else if(moveCount <11) {
+    moveSpriteAfterDelay(mons, mons.x + 1, mons.y, 1000);
+  } else if(moveCount < 15) {
+    moveSpriteAfterDelay(mons, mons.x, mons.y + 1, 1000);
+  } else if(moveCount < 17) {
+    moveSpriteAfterDelay(mons, mons.x + 1, mons.y, 1000);
+  } else if(moveCount < 18) {
+    moveSpriteAfterDelay(mons, mons.x, mons.y - 1, 1000);
+  } else if(moveCount < 20) {
+    moveSpriteAfterDelay(mons, mons.x + 1, mons.y, 1000);
+  }
+  moveCount += 1;
+  if (moveCount < 20) {
+    monsterCatch();
+    setTimeout(moveMonster, 1000); // Recursive call to continue movement
+  }
+}
 
 afterInput(() => {
   const playerPosition = getFirst(player);
@@ -212,8 +289,10 @@ afterInput(() => {
     
     if (currentLevel !== undefined) {
       setMap(currentLevel);
+      moveCount = 0;
     } else {
       addText("you win!", { y: 4, color: color`3` });
+      isGameOver = true;
     }
   }
 
@@ -235,4 +314,11 @@ afterInput(() => {
       moveMonster();
     }
   }
-})
+
+  if(level == 4) {
+    if(tilesWith(button, player).length == 1) {
+      clearTile(3,1);
+    }
+    moveMonster();
+  }
+});
