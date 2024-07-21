@@ -170,9 +170,9 @@ hh..wbw.w
 w...w...f
 hhh...hhh`,
   map`
-.phhhh.......
+m.hhhh.......
 .h.....hhh.hh
-...whhhh.....
+p..whhhh.....
 hh.w.....hhh.
 ...whhh.w.w..
 .w..w.w.w.ww.
@@ -181,6 +181,22 @@ hh.w.....hhh.
 hw.whh.hhh.w.
 ...w.......w.
 .hhf.hhhhh...`,
+  map`
+hhhhhhhhhhh
+p...wbw...f
+hhh.w.whhh.
+....w.w....
+.hhhw.whhh.
+......w....
+hhhhhhwhhh.`,
+  map`
+.....f.....
+.whhhwhhhw.
+.w...w...w.
+...w.w.w...
+hhhw.w.whhh
+...w.w.w...
+pw...w...wm`,
 ];
 
 const currentLevel = levels[level];
@@ -224,6 +240,7 @@ onInput("j", () => {
     isGameOver = false;
     isMonsterMoving = true;
     moveCount = 0;
+    isMonsterPresent = false;
   }
 });
 
@@ -247,6 +264,8 @@ const moveMonster = () => {
     level4();
   } else if(level == 5) {
     level5();
+  } else if(level == 7) {
+    level7();
   }
 };
 
@@ -258,6 +277,16 @@ const monsterCatch = () => {
     isGameOver = true;
   }
 };
+
+const monsterWin = () => {
+  const flagPos = getFirst(flag);
+  const monsPos = getFirst(monster);
+  if(flagPos.x == monsPos.x && flagPos.y == monsPos.y) {
+   addText("you lost", { y: 4, color: color`3`});
+    addText("reset to try again", { y: 6, color: color`3`});
+    isGameOver = true;
+  }
+}
 
 const level3 = () => {
   const mons = getFirst(monster);
@@ -283,7 +312,7 @@ const level3 = () => {
     monsterCatch();
     setTimeout(moveMonster, 500); // Recursive call to continue movement
   }
-}
+};
 
 const level4 = () => {
   let mons = getFirst(monster);
@@ -309,7 +338,7 @@ const level4 = () => {
     monsterCatch();
     setTimeout(moveMonster, 500); // Recursive call to continue movement
   }
-}
+};
 
 const level5 = () => {
   let mons = getFirst(monster);
@@ -349,7 +378,40 @@ const level5 = () => {
     monsterCatch();
     setTimeout(moveMonster, 300); // Recursive call to continue movement
   }
-}
+};
+
+const level7 = () => {
+  let mons = getFirst(monster);
+  if (moveCount < 1) {
+    moveSpriteAfterDelay(mons, mons.x, mons.y - 1, 200);
+  } else if(moveCount < 3) {
+    moveSpriteAfterDelay(mons, mons.x - 1, mons.y, 200);
+  } else if(moveCount < 4) {
+    moveSpriteAfterDelay(mons, mons.x, mons.y + 1, 200);
+  } else if(moveCount < 6) {
+    moveSpriteAfterDelay(mons, mons.x - 1, mons.y, 200);
+  } else if(moveCount < 10) {
+    moveSpriteAfterDelay(mons, mons.x, mons.y - 1, 200);
+  } else if(moveCount < 12) {
+    moveSpriteAfterDelay(mons, mons.x + 1, mons.y, 200);
+  } else if(moveCount < 13) {
+    moveSpriteAfterDelay(mons, mons.x, mons.y + 1, 200);
+  } else if(moveCount < 15) {
+    moveSpriteAfterDelay(mons, mons.x + 1, mons.y, 200);
+  } else if(moveCount < 18) {
+    moveSpriteAfterDelay(mons, mons.x, mons.y - 1, 200);
+  } else if(moveCount < 23) {
+    moveSpriteAfterDelay(mons, mons.x - 1, mons.y, 200);
+  }
+  moveCount += 1;
+  if (moveCount < 23) {
+    monsterCatch();
+    monsterWin();
+    setTimeout(moveMonster, 200); // Recursive call to continue movement
+  }
+};
+
+let isMonsterPresent = false; 
 
 afterInput(() => {
   const playerPosition = getFirst(player);
@@ -365,6 +427,7 @@ afterInput(() => {
     if (currentLevel !== undefined) {
       setMap(currentLevel);
       moveCount = 0;
+      isMonsterPresent = false;
     } else {
       addText("you win!", { y: 4, color: color`3` });
       isGameOver = true;
@@ -381,12 +444,15 @@ afterInput(() => {
     if(tilesWith(button, player).length == 1) {
       clearTile(1,6);
     }
-
+    if(isMonsterPresent) {
+      return;
+    }
     // monster will chase after (1,3)
     if(playerX == 1 && playerY == 3) {
       addSprite(1, 7, monster);
       // Start the movement of the monster
       moveMonster();
+      isMonsterPresent = true;
     }
   }
 
@@ -394,7 +460,7 @@ afterInput(() => {
     if(tilesWith(button, player).length == 1) {
       clearTile(3,1);
     }
-    if(playerX == 1 && playerY == 3) {
+    if(playerX == 6 && playerY == 1) {
       // Start the movement of the monster
       moveMonster();
     }
@@ -402,8 +468,19 @@ afterInput(() => {
 
   if(level == 5) {
     if(playerX == 0 && playerY == 2) {
-      addSprite(0, 0, monster);
       // Start the movement of the monster
+      moveMonster();
+    }
+  }
+
+  if(level == 6) {
+    if(tilesWith(button, player).length == 1) {
+      clearTile(6,5);
+    }
+  }
+
+  if(level == 7) {
+    if(playerX == 0 && playerY == 5) {
       moveMonster();
     }
   }
