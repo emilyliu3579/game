@@ -12,25 +12,26 @@ https://sprig.hackclub.com/gallery/getting_started
 const player = "p"
 const flag = "f"
 const wall = "w"
+const horwall = "h"
 const button = "b"
 const monster = "m"
 
 setLegend(
   [ player, bitmap`
-................
-................
-......0...0.....
-.......0.0......
-........0.......
-.....0000000....
-.....0333330....
-.....0477350....
-.....0447750....
-.....0444440....
-.....0000000....
-................
-................
-................
+....0000000.....
+....0202020.....
+....0000000.....
+....0666660.....
+....0606060.....
+....0666660.....
+....0000000.....
+.....02220......
+...000000000....
+.....02220......
+.....00000......
+.....02220......
+.....00000......
+......0.0.......
 ................
 ................` ],
   [ flag, bitmap`
@@ -51,22 +52,39 @@ setLegend(
 ................
 ................`],
   [ wall, bitmap`
-CCCCCCCCCCCCCCCC
-CCCCCCCCCCCCCCCC
-CCCCCCCCCCCCCCCC
-CCCCCCCCCCCCCCCC
-CCCCCCCCCCCCCCCC
-CCCCCCCCCCCCCCCC
-CCCCCCCCCCCCCCCC
-CCCCCCCCCCCCCCCC
-CCCCCCCCCCCCCCCC
-CCCCCCCCCCCCCCCC
-CCCCCCCCCCCCCCCC
-CCCCCCCCCCCCCCCC
-CCCCCCCCCCCCCCCC
-CCCCCCCCCCCCCCCC
-CCCCCCCCCCCCCCCC
-CCCCCCCCCCCCCCCC`],
+LLLL.........LLL
+LLLL.........LLL
+LLLLLLLLLLLLLLLL
+LLLL.........LLL
+LLLL.........LLL
+LLLLLLLLLLLLLLLL
+LLLL.........LLL
+LLLL.........LLL
+LLLLLLLLLLLLLLLL
+LLLL.........LLL
+LLLL.........LLL
+LLLLLLLLLLLLLLLL
+LLLL.........LLL
+LLLL.........LLL
+LLLLLLLLLLLLLLLL
+LLLL.........LLL`],
+  [ horwall, bitmap`
+LLLLLLLLLLLLLLLL
+LLLLLLLLLLLLLLLL
+LLLLLLLLLLLLLLLL
+..L..L..L..L..L.
+..L..L..L..L..L.
+..L..L..L..L..L.
+..L..L..L..L..L.
+..L..L..L..L..L.
+..L..L..L..L..L.
+..L..L..L..L..L.
+..L..L..L..L..L.
+..L..L..L..L..L.
+..L..L..L..L..L.
+LLLLLLLLLLLLLLLL
+LLLLLLLLLLLLLLLL
+LLLLLLLLLLLLLLLL`],
   [ button, bitmap`
 ................
 ................
@@ -85,25 +103,25 @@ CCCCCCCCCCCCCCCC`],
 ................
 ................`],
   [ monster, bitmap`
-................
-....8888888.....
-..888888888888..
-..88DDDDDDDD88..
-..88DDDDDDDD88..
-..88DD4DD4DD88..
-..88DDDDDDDD88..
-..88DDDDDDDD88..
-..88DDD00DDD88..
-....DDDDDDDD....
-.......DD.......
-.....DDDDDD.....
-.......DD.......
-.......DD.......
-......D..D......
-.....D....D.....`]
+.....555555.....
+.....555555.....
+.....555555.....
+....00000000....
+....06666660....
+....06066060....
+....06666660....
+....00000000....
+.....555555.....
+...0055555500...
+...0.555555.0...
+...0055555500...
+.....555555.....
+.....555555.....
+......0..0......
+.....00..00.....`]
 );
 
-setSolids([ player, wall ]);
+setSolids([ player, wall, horwall ]);
 
 // maps
 let level = 0
@@ -119,38 +137,50 @@ pw...wf
 ...w...`,
   map`
 ...fw.w
-.wwww.w
+.hhhw.w
 ....w..
-www...w
-.pwww.w
-.ww....
-....ww.
-.www...`,
+hhh...w
+.pwhh.w
+.hh....
+....hh.
+.hhh...`,
   map`
 pw...
 .wf..
-.www.
+.whh.
 .w...
-bwwww`,
+bwhhh`,
   map`
 f........
-wwwwww.w.
-wwwwww.w.
-w....w.ww
+hhhhhh.w.
+hhhhhh.w.
+w....w.hh
 w.w.ww...
-w.w.w.ww.
-www.w..w.
-bpw.ww.w.
-www......`,
+w.w.w.hh.
+hhw.w..w.
+bpw.hh.w.
+hhw......`,
   map`
-.wwwwwwww
+.hhhhhhhh
 .w.w...pw
-...ww.w.w
-ww..wbw.w
-.ww.wwwmw
-..w.w.www
+...hh.w.w
+hh..wbw.w
+.wh.whwmw
+..w.w.hhh
 w...w...f
-www...www`,
+hhh...hhh`,
+  map`
+.phhhh.......
+.h.....hhh.hh
+...whhhh.....
+hh.w.....hhh.
+...whhh.w.w..
+.w..w.w.w.ww.
+.w.hh.w....wh
+.w....hhhh.w.
+hw.whh.hhh.w.
+...w.......w.
+.hhf.hhhhh...`,
 ];
 
 const currentLevel = levels[level];
@@ -191,6 +221,9 @@ onInput("j", () => {
   if (currentLevel !== undefined) {
     clearText("");
     setMap(currentLevel);
+    isGameOver = false;
+    isMonsterMoving = true;
+    moveCount = 0;
   }
 });
 
@@ -212,6 +245,8 @@ const moveMonster = () => {
     level3();
   } else if(level == 4) {
     level4();
+  } else if(level == 5) {
+    level5();
   }
 };
 
@@ -227,52 +262,92 @@ const monsterCatch = () => {
 const level3 = () => {
   const mons = getFirst(monster);
   if (moveCount < 4) {
-    moveSpriteAfterDelay(mons, mons.x, mons.y - 1, 1000);
+    moveSpriteAfterDelay(mons, mons.x, mons.y - 1, 500);
   } else if (moveCount < 6) {
-    moveSpriteAfterDelay(mons, mons.x + 1, mons.y, 1000);
+    moveSpriteAfterDelay(mons, mons.x + 1, mons.y, 500);
   } else if (moveCount < 11) {
-    moveSpriteAfterDelay(mons, mons.x, mons.y + 1, 1000);
+    moveSpriteAfterDelay(mons, mons.x, mons.y + 1, 500);
   } else if (moveCount < 16) {
-    moveSpriteAfterDelay(mons, mons.x + 1, mons.y, 1000);
+    moveSpriteAfterDelay(mons, mons.x + 1, mons.y, 500);
   } else if (moveCount < 20) {
-    moveSpriteAfterDelay(mons, mons.x, mons.y - 1, 1000);
+    moveSpriteAfterDelay(mons, mons.x, mons.y - 1, 500);
   } else if (moveCount < 22) {
-    moveSpriteAfterDelay(mons, mons.x - 1, mons.y, 1000);
+    moveSpriteAfterDelay(mons, mons.x - 1, mons.y, 500);
   } else if (moveCount < 26) {
-    moveSpriteAfterDelay(mons, mons.x, mons.y - 1, 1000);
+    moveSpriteAfterDelay(mons, mons.x, mons.y - 1, 500);
   } else if (moveCount < 31) {
-    moveSpriteAfterDelay(mons, mons.x - 1, mons.y, 1000);
+    moveSpriteAfterDelay(mons, mons.x - 1, mons.y, 500);
   }
   moveCount += 1;
   if (moveCount < 31) {
     monsterCatch();
-    setTimeout(moveMonster, 1000); // Recursive call to continue movement
+    setTimeout(moveMonster, 500); // Recursive call to continue movement
   }
 }
 
 const level4 = () => {
-  const mons = getFirst(monster);
+  let mons = getFirst(monster);
   if (moveCount < 3) {
-    moveSpriteAfterDelay(mons, mons.x, mons.y - 1, 1000);
+    moveSpriteAfterDelay(mons, mons.x, mons.y - 1, 500);
   } else if(moveCount < 8) {
-    moveSpriteAfterDelay(mons, mons.x - 1, mons.y, 1000);
+    moveSpriteAfterDelay(mons, mons.x - 1, mons.y, 500);
   } else if(moveCount < 10) {
-    moveSpriteAfterDelay(mons, mons.x, mons.y + 1, 1000);
+    moveSpriteAfterDelay(mons, mons.x, mons.y + 1, 500);
   } else if(moveCount <11) {
-    moveSpriteAfterDelay(mons, mons.x + 1, mons.y, 1000);
+    moveSpriteAfterDelay(mons, mons.x + 1, mons.y, 500);
   } else if(moveCount < 15) {
-    moveSpriteAfterDelay(mons, mons.x, mons.y + 1, 1000);
+    moveSpriteAfterDelay(mons, mons.x, mons.y + 1, 500);
   } else if(moveCount < 17) {
-    moveSpriteAfterDelay(mons, mons.x + 1, mons.y, 1000);
+    moveSpriteAfterDelay(mons, mons.x + 1, mons.y, 500);
   } else if(moveCount < 18) {
-    moveSpriteAfterDelay(mons, mons.x, mons.y - 1, 1000);
+    moveSpriteAfterDelay(mons, mons.x, mons.y - 1, 500);
   } else if(moveCount < 20) {
-    moveSpriteAfterDelay(mons, mons.x + 1, mons.y, 1000);
+    moveSpriteAfterDelay(mons, mons.x + 1, mons.y, 500);
   }
   moveCount += 1;
   if (moveCount < 20) {
     monsterCatch();
-    setTimeout(moveMonster, 1000); // Recursive call to continue movement
+    setTimeout(moveMonster, 500); // Recursive call to continue movement
+  }
+}
+
+const level5 = () => {
+  let mons = getFirst(monster);
+  if (moveCount < 2) {
+    moveSpriteAfterDelay(mons, mons.x, mons.y + 1, 300);
+  } else if(moveCount < 4) {
+    moveSpriteAfterDelay(mons, mons.x + 1, mons.y, 300);
+  } else if(moveCount < 5) {
+    moveSpriteAfterDelay(mons, mons.x, mons.y - 1, 300);
+  } else if(moveCount <9) {
+    moveSpriteAfterDelay(mons, mons.x + 1, mons.y, 300);
+  } else if(moveCount < 10) {
+    moveSpriteAfterDelay(mons, mons.x, mons.y - 1, 300);
+  } else if(moveCount < 14) {
+    moveSpriteAfterDelay(mons, mons.x + 1, mons.y, 300);
+  } else if(moveCount < 16) {
+    moveSpriteAfterDelay(mons, mons.x, mons.y + 1, 300);
+  } else if(moveCount < 18) {
+    moveSpriteAfterDelay(mons, mons.x - 1, mons.y, 300);
+  } else if(moveCount < 19) {
+    moveSpriteAfterDelay(mons, mons.x, mons.y + 1, 300);
+  } else if(moveCount < 20) {
+    moveSpriteAfterDelay(mons, mons.x - 1, mons.y, 300);
+  } else if(moveCount < 23) {
+    moveSpriteAfterDelay(mons, mons.x, mons.y + 1, 300);
+  } else if(moveCount < 26) {
+    moveSpriteAfterDelay(mons, mons.x + 1, mons.y, 300);
+  } else if(moveCount < 29) {
+    moveSpriteAfterDelay(mons, mons.x, mons.y + 1, 300);
+  } else if(moveCount < 35) {
+    moveSpriteAfterDelay(mons, mons.x - 1, mons.y, 300);
+  } else if(moveCount < 36) {
+    moveSpriteAfterDelay(mons, mons.x, mons.y + 1, 300);
+  }
+  moveCount += 1;
+  if (moveCount < 36) {
+    monsterCatch();
+    setTimeout(moveMonster, 300); // Recursive call to continue movement
   }
 }
 
@@ -319,6 +394,17 @@ afterInput(() => {
     if(tilesWith(button, player).length == 1) {
       clearTile(3,1);
     }
-    moveMonster();
+    if(playerX == 1 && playerY == 3) {
+      // Start the movement of the monster
+      moveMonster();
+    }
+  }
+
+  if(level == 5) {
+    if(playerX == 0 && playerY == 2) {
+      addSprite(0, 0, monster);
+      // Start the movement of the monster
+      moveMonster();
+    }
   }
 });
